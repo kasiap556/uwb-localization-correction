@@ -1,0 +1,34 @@
+# PyCharm
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+env/
+venv/
+.venv/
+ENV/
+.env/
+.ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logi i pliki tymczasowe
+*.log
+*.tmp
+*.bak
+
+# Systemowe
+.DS_Store
+Thumbs.db
+
+# Dane lokalne
+dane/
+
+# Pliki konfiguracyjne środowiska (opcjonalnie)
+.env
