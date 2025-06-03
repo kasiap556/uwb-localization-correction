@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from data_loader import prepare_datasets
 from trainer import train_model
-
+from plots import Plots
 
 def research():
     (X_train, y_train), (X_test, y_test) = prepare_datasets('data')
@@ -31,7 +31,6 @@ def research():
                             print(f"Training: {activation}, hidden={hidden_units}, lr={lr}, "
                                   f"batch={batch_size}, init={init_method}, trial={trial + 1}/{trials}")
 
-                            # Konfiguracja
                             config = {
                                 'hidden_units': hidden_units,
                                 'activation': activation,
@@ -84,7 +83,7 @@ def research():
         json.dump(results, f, indent=4)
 
     print("end, zapisane w plikach json")
-
+    Plots.plot_research_results("all_results.json", "research_results.png")
 
 if __name__ == '__main__':
     research()
