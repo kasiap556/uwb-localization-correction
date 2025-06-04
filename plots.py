@@ -3,7 +3,7 @@ import numpy as np
 import json
 import os
 import tensorflow as tf
-from tf.keras.models import load_model
+from tensorflow.keras.models import load_model
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 
@@ -79,8 +79,12 @@ class Plots:
 
     @staticmethod
     def plot_research_results(results_file="all_results.json", filename="research_results.png"):
-        with open(results_file, 'r') as f:
-            results = json.load(f)
+        try:
+            with open(results_file, 'r') as f:
+                results = json.load(f)
+        except FileNotFoundError:
+            print(f"Nie znaleziono pliku: {results_file}")
+            return
 
         configs = []
         avg_mses = []
@@ -117,8 +121,15 @@ class Plots:
         with open(config_path, 'r') as f:
             config = json.load(f)
 
-        scaler_class = StandardScaler if config['scaling'] == 'standard' else \
-            MinMaxScaler if config['scaling'] == 'minmax' else MaxAbsScaler
+        if config['scaling'] == 'standard':
+            scaler_class = StandardScaler
+        elif config['scaling'] == 'minmax':
+            scaler_class = MinMaxScaler
+        elif config['scaling'] == 'maxabs':
+            scaler_class = MaxAbsScaler
+        else:
+            scaler_class = StandardScaler
+
         scaler_X = scaler_class()
         scaler_y = scaler_class()
 

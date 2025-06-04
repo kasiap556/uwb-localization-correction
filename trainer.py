@@ -44,7 +44,7 @@ def create_scaler(method):
         raise ValueError(f"Unknown scaling method: {method}")
 
 
-def create_model(input_dim, hidden_units, activation, init_method):
+def create_model(input_dim, hidden_layers, activation, init_method):
     if init_method == 'uniform':
         initializer = RandomUniform(minval=-0.1, maxval=0.1)
     elif init_method == 'xavier':
@@ -55,12 +55,11 @@ def create_model(input_dim, hidden_units, activation, init_method):
         initializer = 'glorot_uniform'
 
     model = Sequential()
-    model.add(Dense(
-        hidden_units,
-        input_dim=input_dim,
-        activation=activation,
-        kernel_initializer=initializer
-    ))
+    model.add(Dense(hidden_layers[0], input_dim=input_dim, activation=activation, kernel_initializer=initializer))
+
+    for units in hidden_layers[1:]:
+        model.add(Dense(units, activation=activation, kernel_initializer=initializer))
+
     model.add(Dense(2, activation='linear', kernel_initializer=initializer))
 
     return model

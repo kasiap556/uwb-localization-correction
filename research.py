@@ -10,9 +10,9 @@ def research():
 
     #wartosci dobre?
     activations = ['sigmoid', 'tanh', 'relu']
-    hidden_units_list = 3
-    learning_rates = 0.0001
-    batch_sizes = 40
+    hidden_units_list = [1, 2, 3]
+    learning_rates = [0.0001]
+    batch_sizes = [40]
     init_methods = ['uniform', 'xavier', 'he']
     trials = 3
 

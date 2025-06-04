@@ -34,7 +34,16 @@ def get_data():
     patience = input("Podaj wartość cierpliwości dla wczesnego zatrzymania (domyślnie 10): ")
     patience = int(patience) if patience else 10
 
-    return hidden_layers, batch, epoch, learing_rate, initializers, scal_method,seed, patience
+    return {
+        'hidden_layers': hidden_layers,
+        'batch_size': int(batch),
+        'epochs': int(epoch),
+        'learning_rate': learing_rate,
+        'init_method': initializers,
+        'scaling': scal_method,
+        'seed': seed,
+        'patience': patience
+    }
 
 def main():
     data = get_data()
@@ -43,7 +52,7 @@ def main():
         np.random.seed(data['seed'])
         tf.random.set_seed(data['seed'])
 
-    (X_train, y_train), (X_test, y_test) = prepare_datasets(data.data_dir)
+    (X_train, y_train), (X_test, y_test) = prepare_datasets("dane")
     result = train_model(data, X_train, y_train, X_test, y_test)
 
     print(f"Końcowe MSE treningowe: {result['train_mses'][-1]:.4f}")
