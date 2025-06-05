@@ -8,7 +8,6 @@ from plots import Plots
 def research():
     (X_train, y_train), (X_test, y_test) = prepare_datasets('data')
 
-    #wartosci dobre?
     activations = ['sigmoid', 'tanh', 'relu']
     hidden_units_list = [1, 2, 3]
     learning_rates = [0.0001]
@@ -36,7 +35,7 @@ def research():
                                 'activation': activation,
                                 'learning_rate': lr,
                                 'batch_size': batch_size,
-                                'max_epochs': 20,
+                                'max_epochs': 40,
                                 'scaling': 'standard',
                                 'init_method': init_method,
                                 'patience': 20,

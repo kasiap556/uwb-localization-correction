@@ -1,4 +1,5 @@
 import numpy as np
+from keras import Input
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
@@ -44,7 +45,7 @@ def create_scaler(method):
         raise ValueError(f"Unknown scaling method: {method}")
 
 
-def create_model(input_dim, hidden_layers, activation, init_method):
+def create_model(input_dim, hidden_layers, input_layer_activation, init_method):
     if init_method == 'uniform':
         initializer = RandomUniform(minval=-0.1, maxval=0.1)
     elif init_method == 'xavier':
@@ -55,10 +56,11 @@ def create_model(input_dim, hidden_layers, activation, init_method):
         initializer = 'glorot_uniform'
 
     model = Sequential()
-    model.add(Dense(hidden_layers[0], input_dim=input_dim, activation=activation, kernel_initializer=initializer))
-
-    for units in hidden_layers[1:]:
-        model.add(Dense(units, activation=activation, kernel_initializer=initializer))
+    model.add(Input(shape=(2,)))
+    model.add(Dense(hidden_layers[0][0], activation=input_layer_activation, kernel_initializer=initializer)) #input_shape=(2,)
+    if len(hidden_layers) > 1 :
+        for layer in hidden_layers[1:]:
+            model.add(Dense(layer[0], activation=layer[1], kernel_initializer=initializer))
 
     model.add(Dense(2, activation='linear', kernel_initializer=initializer))
 
@@ -77,8 +79,8 @@ def train_model(config, X_train, y_train, X_test, y_test):
 
     model = create_model(
         input_dim=2,
-        hidden_units=config['hidden_units'],
-        activation=config['activation'],
+        hidden_layers=config['hidden_layers'],
+        input_layer_activation=config['input_layer_activation'],
         init_method=config['init_method']
     )
 
@@ -100,10 +102,10 @@ def train_model(config, X_train, y_train, X_test, y_test):
     history = model.fit(
         X_train_scaled,
         y_train_scaled,
-        epochs=config['max_epochs'],
+        epochs=config['epochs'],
         batch_size=config['batch_size'],
         verbose=0,
-        callbacks=[metrics_logger, early_stopping]
+        callbacks=[metrics_logger]
     )
 
     return {
@@ -111,6 +113,6 @@ def train_model(config, X_train, y_train, X_test, y_test):
         'train_mses': metrics_logger.train_mses,
         'test_mses': metrics_logger.test_mses,
         'scaler_X': scaler_X,
-        'scaler_y': scaler_y,
+        'scaler_Y': scaler_y,
         'epochs': len(metrics_logger.train_mses)
     }

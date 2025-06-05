@@ -29,6 +29,7 @@ Thumbs.db
 
 # Dane lokalne
 dane/
+*.png
 
 # Pliki konfiguracyjne środowiska (opcjonalnie)
 .env
