@@ -92,13 +92,13 @@ def train_model(config, X_train, y_train, X_test, y_test):
 
     metrics_logger = MetricsLogger(X_train_scaled, y_train, X_test_scaled, y_test, scaler_y)
 
-    early_stopping = EarlyStopping(
-        monitor='val_mse_orig',
-        patience=config['patience'],
-        min_delta=config['tol'],
-        restore_best_weights=True,
-        mode='min'
-    )
+    # early_stopping = EarlyStopping(
+    #     monitor='val_mse_orig',
+    #     patience=config['patience'],
+    #     min_delta=config['tol'],
+    #     restore_best_weights=True,
+    #     mode='min'
+    # )
 
     history = model.fit(
         X_train_scaled,
@@ -106,7 +106,7 @@ def train_model(config, X_train, y_train, X_test, y_test):
         epochs=config['epochs'],
         batch_size=config['batch_size'],
         verbose=0,
-        callbacks=[metrics_logger, early_stopping]
+        callbacks=[metrics_logger]
     )
 
     return {

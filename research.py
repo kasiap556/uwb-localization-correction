@@ -14,24 +14,24 @@ def research():
     init_methods = ['uniform', 'xavier', 'he']
 
     config_list = [
-        {
-            'hidden_layers': [(6, activations[2])],
-            'input_layer_activation': activations[0],
-            'batch_size': 40,
-            'epochs': 40,
-            'learning_rate': 0.0001,
-            'init_method': init_methods[0],
-            'scaling': "standard",
-            'seed': 42,
-            'patience': 10,
-            'tol': 0.0001
-        },
+        # {
+        #     'hidden_layers': [(6, activations[2])],
+        #     'input_layer_activation': activations[2],
+        #     'batch_size': 40,
+        #     'epochs': 40,
+        #     'learning_rate': 0.0001,
+        #     'init_method': init_methods[0],
+        #     'scaling': "standard",
+        #     'seed': 42,
+        #     'patience': 10,
+        #     'tol': 0.0001
+        # },
 
         {
             'hidden_layers': [(6, activations[2]), (4, activations[2])],
-            'input_layer_activation': activations[0],
+            'input_layer_activation': activations[2],
             'batch_size': 40,
-            'epochs': 40,
+            'epochs': 10,
             'learning_rate': 0.0001,
             'init_method': init_methods[0],
             'scaling': "standard",
@@ -58,6 +58,10 @@ def research():
             f"init{config['input_layer_activation']}_seed{config['seed']}"
         )
 
+        X_test_scaled = res['scaler_X'].transform(X_test)
+        predictions_scaled = res['model'].predict(X_test_scaled)
+        predictions = res['scaler_Y'].inverse_transform(predictions_scaled)
+
         results[config_key] = {
             'activation': config['hidden_layers'][0][1],
             'hidden_units': len(config['hidden_layers']),
@@ -66,9 +70,13 @@ def research():
             'init_method': config['init_method'],
             'train_mses': res['train_mses'],
             'test_mses': res['test_mses'],
+            'reference_mse': float(tf.keras.losses.MeanSquaredError()(X_test, y_test)),
             'avg_test_mse': avg_test_mse,
             'std_test_mse': std_test_mse,
-            'epochs': res['epochs']
+            'epochs': res['epochs'],
+            'predictions': predictions.tolist(),
+            'test_output': y_test.tolist(),
+            'test_input': X_test.tolist(),
         }
 
         if avg_test_mse < best_mse:
@@ -82,7 +90,8 @@ def research():
         json.dump(results, f, indent=4)
 
     print("zapisane w plikach json")
-    Plots.plot_research_results("all_results.json", "research_results.png")
+    #Plots.plot_research_results("best_config.json")
 
 if __name__ == '__main__':
     research()
+    Plots.plots_from_file("best_config.json")

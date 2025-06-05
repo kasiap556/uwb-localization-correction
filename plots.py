@@ -1,155 +1,129 @@
-import matplotlib.pyplot as plt
-import numpy as np
 import json
-import os
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import stats
 
 class Plots:
 
     @staticmethod
-    def plot_training_history(train_mses, test_mses, filename="training_history.png"):
-        epochs = range(1, len(train_mses) + 1)
+    def plots_from_file(filepath):
 
-        plt.figure(figsize=(10, 6))
-        plt.plot(epochs, train_mses, 'b-', label='Treningowe MSE')
-        plt.plot(epochs, test_mses, 'r-', label='Testowe MSE')
-        plt.title('Błąd MSE w kolejnych epokach')
-        plt.xlabel('Epoki')
+        # Wczytanie danych
+        with open(filepath) as f:
+            results = json.load(f)
+
+        epochs = list(range(1, 11))
+
+        # Wykres 1: MSE na zbiorze uczącym
+        plt.figure(figsize=(12, 6))
+        # for label, data in models.items():
+        #     plt.semilogy(epochs, data['train_mses'], label=label, linewidth=2)
+        plt.plot(epochs, results['train_mses'], label="Train MSE", linewidth=2)
+
+        plt.title('Błąd MSE na zbiorze uczącym w kolejnych epokach')
+        plt.xlabel('Epoka')
         plt.ylabel('MSE')
+        plt.grid(True, which="both", ls="--")
         plt.legend()
-        plt.grid(True)
-        plt.savefig(filename)
-        plt.close()
-        print(f"Zapisano wykres: {filename}")
+        plt.xlim(1, 11)
+        plt.ylim(10000, 80000)  # Przycięcie górnej części osi
+        plt.tight_layout()
+        #plt.show()
+        plt.savefig(filepath + '1.png')
 
-    @staticmethod
-    def plot_errors_cdf(model, scaler_X, scaler_y, X_test, y_test, filename="errors_cdf.png"):
-        X_test_scaled = scaler_X.transform(X_test)
-        y_pred_scaled = model.predict(X_test_scaled, verbose=0)
-        y_pred = scaler_y.inverse_transform(y_pred_scaled)
+        # Wykres 2: MSE na zbiorze testowym
+        plt.figure(figsize=(12, 6))
+        # for label, data in models.items():
+        #     plt.semilogy(epochs, data['test_mses'], label=label, linewidth=2)
+        plt.plot(epochs, results['test_mses'], label="Train MSE", linewidth=2)
+        plt.axhline(y=results['reference_mse'], color='black', linestyle='--', label='Wartość błędu MSE dla danych testowych')
+        plt.title('Błąd MSE na zbiorze testowym w kolejnych epokach')
+        plt.xlabel('Epoka')
+        plt.ylabel('MSE (skala logarytmiczna)')
+        plt.grid(True, which="both", ls="--")
+        plt.legend()
+        plt.xlim(1, 11)
+        plt.ylim(10000, 80000)  # Przycięcie górnej części osi
+        plt.tight_layout()
+        #plt.show()
+        plt.savefig(filepath + '2.png')
 
-        errors = np.linalg.norm(y_pred - y_test, axis=1)
+        # Generowanie danych zastępczych do wykresów 3 i 4 (symulacja)
+        # np.random.seed(42)
+        # n_points = 1000
+        # measured = np.random.normal(50, 15, epochs)  # Zmierzone wartości
+        # true_values = measured + np.random.normal(0, 5, epochs)  # Rzeczywiste wartości
+        # corrected = true_values + np.random.normal(0, 2, epochs)  # Skorygowane (najlepszy model)
+        #
+        # # Błędy dla dystrybuanty
+        # errors_measured = np.abs(measured - true_values)
+        # errors_corrected = np.abs(corrected - true_values)
+
+        # Wykres 3: Dystrybuanty błędów
+        # plt.figure(figsize=(12, 6))
+        # plt.plot(sorted(errors_measured), np.linspace(0, 1, len(errors_measured)),
+        #                                               label='Błędy zmierzone', linewidth=2)
+        # plt.plot(sorted(errors_corrected), np.linspace(0, 1, len(errors_corrected)),
+        #                                                label='Błędy skorygowane (2 neurony)', linewidth=2)
+        #
+        # plt.title('Dystrybuanty błędów dla wyników pomiarów')
+        # plt.xlabel('Wartość błędu')
+        # plt.ylabel('Dystrybuanta')
+        # plt.grid(True, ls="--")
+        # plt.legend()
+        # plt.xlim(0, 20)  # Dopasowanie do obszaru największego wzrostu
+        # plt.tight_layout()
+        # #plt.show()
+        # plt.savefig(filepath + '3.png')
+
+        plt.figure(figsize=(16, 12))
+
+        predictions = np.array(results['predictions'])
+        test_output = np.array(results['test_output'])
+        test_input = np.array(results['test_input'])
+
+        errors = np.linalg.norm(predictions - test_output, axis=1)
         sorted_errors = np.sort(errors)
         ps = np.arange(len(sorted_errors)) / float(len(sorted_errors))
+        plt.plot(sorted_errors, ps, label=f"Model z iloscia warstw ukrytych =  {results['hidden_units']}")
 
-        raw_errors = np.linalg.norm(X_test - y_test, axis=1)
-        sorted_raw_errors = np.sort(raw_errors)
-        ps_raw = np.arange(len(sorted_raw_errors)) / float(len(sorted_raw_errors))
+        all_errors = np.linalg.norm(test_output - test_input, axis=1)
+        all_sorted_errors = np.sort(all_errors)
+        ps_all_errors = np.arange(len(all_sorted_errors)) / float(len(all_sorted_errors))
+        plt.plot(all_sorted_errors, ps_all_errors, label='Wszystkie dane testowe', color='black', linestyle='--')
 
-        plt.figure(figsize=(10, 6))
-        plt.plot(sorted_errors, ps, 'b-', label='Po korekcji')
-        plt.plot(sorted_raw_errors, ps_raw, 'r--', label='Bez korekcji')
-
-        plt.title("Dystrybuanta błędów pozycjonowania")
+        plt.title("Dystrybuanta błędów dla pomiarów dynamicznych")
         plt.xlabel("Błąd [mm]")
         plt.ylabel("Prawdopodobieństwo skumulowane")
         plt.xscale('log')
+
+        xmin = np.min(np.concatenate([sorted_errors, all_sorted_errors]))
+        xmax = np.max(np.concatenate([sorted_errors, all_sorted_errors])) + 10
+        plt.xlim(xmin, xmax)
+
         plt.legend()
         plt.grid(True)
-        plt.savefig(filename)
-        plt.close()
-        print(f"Zapisano wykres: {filename}")
+        plt.savefig(filepath + "3.png")
+        plt.show()
 
-    @staticmethod
-    def plot_point_chart(model, scaler_X, scaler_y, X_test, y_test, filename="point_chart.png"):
-        X_test_scaled = scaler_X.transform(X_test)
-        y_pred_scaled = model.predict(X_test_scaled, verbose=0)
-        y_pred = scaler_y.inverse_transform(y_pred_scaled)
 
-        n_points = min(500, len(X_test))
-        indices = np.random.choice(len(X_test), n_points, replace=False)
-
-        plt.figure(figsize=(10, 8))
-        plt.scatter(y_test[indices, 0], y_test[indices, 1], color='blue', s=15, alpha=0.7, label='Rzeczywiste')
-        plt.scatter(X_test[indices, 0], X_test[indices, 1], color='green', s=15, alpha=0.7, label='Zmierzone')
-        plt.scatter(y_pred[indices, 0], y_pred[indices, 1], color='red', s=15, alpha=0.7, label='Skorygowane')
-
-        plt.title("Porównanie pozycji rzeczywistych, zmierzonych i skorygowanych")
-        plt.xlabel("x [mm]")
-        plt.ylabel("y [mm]")
-        plt.legend()
-        plt.grid(True)
-        plt.axis('equal')
-        plt.savefig(filename)
-        plt.close()
-        print(f"Zapisano wykres: {filename}")
-
-    @staticmethod
-    def plot_research_results(results_file="all_results.json", filename="research_results.png"):
-        try:
-            with open(results_file, 'r') as f:
-                results = json.load(f)
-        except FileNotFoundError:
-            print(f"Nie znaleziono pliku: {results_file}")
-            return
-
-        configs = []
-        avg_mses = []
-        std_mses = []
-
-        for key, res in results.items():
-            configs.append(key)
-            avg_mses.append(res['avg_test_mse'])
-            std_mses.append(res['std_test_mse'])
-
-        sorted_indices = np.argsort(avg_mses)
-        configs = [configs[i] for i in sorted_indices]
-        avg_mses = [avg_mses[i] for i in sorted_indices]
-        std_mses = [std_mses[i] for i in sorted_indices]
-
-        plt.figure(figsize=(12, 8))
-        y_pos = np.arange(len(configs))
-
-        plt.barh(y_pos, avg_mses, xerr=std_mses, align='center', alpha=0.7)
-        plt.yticks(y_pos, configs, fontsize=8)
-        plt.xlabel('Średni błąd MSE')
-        plt.title('Porównanie wyników różnych konfiguracji modelu')
-        plt.grid(True, axis='x')
-        plt.tight_layout()
-        plt.savefig(filename)
-        plt.close()
-        print(f"Zapisano wykres: {filename}")
-
-    @staticmethod
-    def plot_all_for_model(model_path, data_dir='data'):
-        model = load_model(model_path)
-
-        config_path = os.path.splitext(model_path)[0] + '_config.json'
-        with open(config_path, 'r') as f:
-            config = json.load(f)
-
-        if config['scaling'] == 'standard':
-            scaler_class = StandardScaler
-        elif config['scaling'] == 'minmax':
-            scaler_class = MinMaxScaler
-        elif config['scaling'] == 'maxabs':
-            scaler_class = MaxAbsScaler
-        else:
-            scaler_class = StandardScaler
-
-        scaler_X = scaler_class()
-        scaler_y = scaler_class()
-
-        from data_loader import prepare_datasets
-        (X_train, y_train), (X_test, y_test) = prepare_datasets(data_dir)
-
-        scaler_X.fit(X_train)
-        scaler_y.fit(y_train)
-
-        base_name = os.path.splitext(model_path)[0]
-        Plots.plot_training_history(
-            config['train_mses'],
-            config['test_mses'],
-            f"{base_name}_history.png"
-        )
-        Plots.plot_errors_cdf(
-            model, scaler_X, scaler_y, X_test, y_test,
-            f"{base_name}_cdf.png"
-        )
-        Plots.plot_point_chart(
-            model, scaler_X, scaler_y, X_test, y_test,
-            f"{base_name}_points.png"
-        )
+        #
+        # # Wykres 4: Wartości pomiarów (najlepszy model)
+        # plt.figure(figsize=(14, 8))
+        # # Warstwy: rzeczywiste -> skorygowane -> zmierzone
+        # # plt.scatter(range(n_points), true_values, alpha=0.6, label='Wartości rzeczywiste', s=20)
+        # # plt.scatter(range(n_points), corrected, alpha=0.5, label='Wartości skorygowane', s=15)
+        # # plt.scatter(range(n_points), measured, alpha=0.4, label='Wartości zmierzone', s=10)
+        #
+        # plt.scatter(true_values[:,0], true_values[:, 1], color='blue', label='Wartości rzeczywiste', zorder=4)
+        # plt.scatter(corrected[:,0], corrected[:, 1], color='red', label='Wartości skorygowane', zorder=3)
+        # plt.scatter(measured[:,0], measured[:, 1], color='green', label='Wartości zmierzone', zorder=2)
+        #
+        # plt.title('Porównanie wartości pomiarów (najlepszy model: 2 neurony)')
+        # plt.xlabel('Numer próbki')
+        # plt.ylabel('Wartość (skala oryginalna)')
+        # plt.legend()
+        # plt.grid(True, alpha=0.3)
+        # plt.tight_layout()
+        # #plt.show()
+        # plt.savefig(filepath + '4.png')

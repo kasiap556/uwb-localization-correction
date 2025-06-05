@@ -78,6 +78,7 @@ def main():
 
     if data['seed'] is not None:
         np.random.seed(data['seed'])
+
         tf.random.set_seed(data['seed'])
 
     (X_train, y_train), (X_test, y_test) = prepare_datasets("dane")
