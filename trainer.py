@@ -35,14 +35,15 @@ class MetricsLogger(Callback):
 
 
 def create_scaler(method):
-    if method == 'maxabs':
-        return MaxAbsScaler()
-    elif method == 'minmax':
-        return MinMaxScaler()
-    elif method == 'standard':
-        return StandardScaler()
-    else:
-        raise ValueError(f"Unknown scaling method: {method}")
+    return StandardScaler()
+    # if method == 'maxabs':
+    #     return MaxAbsScaler()
+    # elif method == 'minmax':
+    #     return MinMaxScaler()
+    # elif method == 'standard':
+    #     return StandardScaler()
+    # else:
+    #     raise ValueError(f"Unknown scaling method: {method}")
 
 
 def create_model(input_dim, hidden_layers, input_layer_activation, init_method):
@@ -105,7 +106,7 @@ def train_model(config, X_train, y_train, X_test, y_test):
         epochs=config['epochs'],
         batch_size=config['batch_size'],
         verbose=0,
-        callbacks=[metrics_logger]
+        callbacks=[metrics_logger, early_stopping]
     )
 
     return {
