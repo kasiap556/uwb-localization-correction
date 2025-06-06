@@ -29,39 +29,22 @@ class MetricsLogger(Callback):
         test_mse = np.mean((self.y_test - y_test_pred_orig) ** 2)
         self.test_mses.append(test_mse)
 
-        print(f"Epoch {epoch+1}, Train MSE: {train_mse:.3f}, Test MSE: {test_mse:.3f}")
-
-        logs['val_mse_orig'] = test_mse
+        #logs['val_mse_orig'] = test_mse
 
 
-def create_scaler(method):
-    return StandardScaler()
-    # if method == 'maxabs':
-    #     return MaxAbsScaler()
-    # elif method == 'minmax':
-    #     return MinMaxScaler()
-    # elif method == 'standard':
-    #     return StandardScaler()
-    # else:
-    #     raise ValueError(f"Unknown scaling method: {method}")
-
-
-def create_model(input_dim, hidden_layers, input_layer_activation, init_method):
+def create_model(input_dim, neurons, hidden_layer_activation, init_method):
     if init_method == 'uniform':
-        initializer = RandomUniform(minval=-0.1, maxval=0.1)
+        initializer = RandomUniform(minval=-1, maxval=1)
     elif init_method == 'xavier':
-        initializer = GlorotUniform()
+        initializer = GlorotUniform() #losuje wagi z zakresu zależnego od liczby wejść/wyjść warstwy.
     elif init_method == 'he':
-        initializer = HeUniform()
+        initializer = HeUniform()  #bierze pod uwagę liczbę wejść do neuronu.
     else:
         initializer = 'glorot_uniform'
 
     model = Sequential()
     model.add(Input(shape=(2,)))
-    model.add(Dense(hidden_layers[0][0], activation=input_layer_activation, kernel_initializer=initializer)) #input_shape=(2,)
-    if len(hidden_layers) > 1 :
-        for layer in hidden_layers[1:]:
-            model.add(Dense(layer[0], activation=layer[1], kernel_initializer=initializer))
+    model.add(Dense(neurons, activation=hidden_layer_activation, kernel_initializer=initializer))
 
     model.add(Dense(2, activation='linear', kernel_initializer=initializer))
 
@@ -69,36 +52,28 @@ def create_model(input_dim, hidden_layers, input_layer_activation, init_method):
 
 
 def train_model(config, X_train, y_train, X_test, y_test):
-    scaler_X = create_scaler(config['scaling'])
-    scaler_X.fit(X_train)
+    scaler_X = StandardScaler()
+    scaler_X.fit(X_train) #oblicza średnią (mean) i odchylenie standardowe (std)
     X_train_scaled = scaler_X.transform(X_train)
     X_test_scaled = scaler_X.transform(X_test)
 
-    scaler_y = create_scaler(config['scaling'])
+    scaler_y = StandardScaler()
     scaler_y.fit(y_train)
     y_train_scaled = scaler_y.transform(y_train)
 
     model = create_model(
         input_dim=2,
-        hidden_layers=config['hidden_layers'],
-        input_layer_activation=config['input_layer_activation'],
+        neurons=config['hidden_neurons'],
+        hidden_layer_activation=config['hidden_layer_activation'],
         init_method=config['init_method']
     )
 
     model.compile(
-        optimizer=Adam(learning_rate=config['learning_rate']),
+        optimizer=Adam(learning_rate=config['learning_rate']), #do aktualizowania wag modelu tak, aby minimalizować funkcję straty
         loss='mse'
     )
 
     metrics_logger = MetricsLogger(X_train_scaled, y_train, X_test_scaled, y_test, scaler_y)
-
-    # early_stopping = EarlyStopping(
-    #     monitor='val_mse_orig',
-    #     patience=config['patience'],
-    #     min_delta=config['tol'],
-    #     restore_best_weights=True,
-    #     mode='min'
-    # )
 
     history = model.fit(
         X_train_scaled,
@@ -117,3 +92,5 @@ def train_model(config, X_train, y_train, X_test, y_test):
         'scaler_Y': scaler_y,
         'epochs': len(metrics_logger.train_mses)
     }
+
+#standardscaler zapobiega dominacji cech o dużej skali, nie ogranicza zakresu wartości

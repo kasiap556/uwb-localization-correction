@@ -3,19 +3,17 @@ import glob
 import pandas as pd
 import numpy as np
 
-
 def load_data(base_path, folders, subfolder):
     data_frames = []
     for f in folders:
         path = os.path.join(base_path, f, subfolder, '*.csv')
-        files = glob.glob(path) #wyszukuje pliki pasujące do wzorca sciezki
+        files = glob.glob(path)
         for x in files:
             df = pd.read_csv(x, header=None)
             data_frames.append(df)
     if not data_frames:
         return pd.DataFrame()
-    return pd.concat(data_frames, ignore_index=True) #laczy ramki danych w 1, resetuje indeksy po polaczeniu
-
+    return pd.concat(data_frames, ignore_index=True)
 
 def prepare_datasets(data_dir):
     train_df = load_data(data_dir, ['f8', 'f10'], 'stat')
