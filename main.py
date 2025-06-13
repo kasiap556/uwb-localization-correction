@@ -1,8 +1,6 @@
 import json
 import numpy as np
 import tensorflow as tf
-from scipy.linalg import hilbert
-
 from data_loader import prepare_datasets
 from trainer import train_model
 from plots import Plots
@@ -20,17 +18,17 @@ def research():
         hidden_neuron_count = input("Podaj ile neuronów w warstwie ukrytej (domyślnie 6): ")
         hidden_neuron_count = int(hidden_neuron_count) if hidden_neuron_count else 6
 
-        learning_rate = input("Podaj prędkość uczenia (np. 0.0001) [domyślnie 0.0001]: ")
+        learning_rate = input("Podaj prędkość uczenia (domyślnie 0.0001): ")
         learning_rate = float(learning_rate) if learning_rate else 0.0001
 
         batch_size = input("Podaj rozmiar batcha (domyślnie 40): ")
         batch_size = int(batch_size) if batch_size else 40
 
-        epochs = input("Podaj liczbe epok (domyślnie 10): ")
+        epochs = input("Podaj liczbe epok (domyślnie 10 - do testów): ")
         epochs = int(epochs) if epochs else 10
 
         hidden_layer_activation = input(
-            "Podaj metode aktywacji (sigmoid, tanh, relu) warstwy ukrytej [domyślnie relu]: ")
+            "Podaj metode aktywacji (sigmoid, tanh, relu) warstwy ukrytej (domyślnie relu): ")
         hidden_layer_activation = hidden_layer_activation if hidden_layer_activation in activations else "relu"
 
         init_method = input("Podaj metode inicjalizacji wag (uniform, xavier, he) [domyślnie uniform]: ")
@@ -39,13 +37,13 @@ def research():
         config = {
             'hidden_neurons': hidden_neuron_count,
             'hidden_layer_activation': hidden_layer_activation,
-            'batch_size': batch_size, #podzbiór danych, model przetwarza jednorazowo, zanim zaktualizuje swoje wagi
+            'batch_size': batch_size,
             'epochs': epochs,
             'learning_rate': learning_rate,
             'init_method': init_method,
             'scaling': "standard",
-            'patience': 10, #gdy sie nie poprawi model (po tylu) to zatrzymyje trening
-            'tol': 0.0001 #jesli poprawa mniejsza niz tol to nie ma postepu
+            'patience': 10,
+            'tol': 0.0001
         }
 
         config_list.append(config)
@@ -55,7 +53,7 @@ def research():
     best_mse = float('inf')
 
     for config in config_list:
-        print(f"Training config with {config['hidden_neurons']} hidden neurons...")
+        print(f"Training with {config['hidden_neurons']} hidden neurons...")
         res = train_model(config, X_train, y_train, X_test, y_test)
 
         avg_test_mse = float(np.mean(res['test_mses']))

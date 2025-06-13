@@ -1,6 +1,6 @@
 import numpy as np
 from keras import Input
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+from sklearn.preprocessing import StandardScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
@@ -29,16 +29,14 @@ class MetricsLogger(Callback):
         test_mse = np.mean((self.y_test - y_test_pred_orig) ** 2)
         self.test_mses.append(test_mse)
 
-        #logs['val_mse_orig'] = test_mse
-
 
 def create_model(input_dim, neurons, hidden_layer_activation, init_method):
     if init_method == 'uniform':
         initializer = RandomUniform(minval=-1, maxval=1)
     elif init_method == 'xavier':
-        initializer = GlorotUniform() #losuje wagi z zakresu zależnego od liczby wejść/wyjść warstwy.
+        initializer = GlorotUniform()
     elif init_method == 'he':
-        initializer = HeUniform()  #bierze pod uwagę liczbę wejść do neuronu.
+        initializer = HeUniform()
     else:
         initializer = 'glorot_uniform'
 
@@ -53,7 +51,7 @@ def create_model(input_dim, neurons, hidden_layer_activation, init_method):
 
 def train_model(config, X_train, y_train, X_test, y_test):
     scaler_X = StandardScaler()
-    scaler_X.fit(X_train) #oblicza średnią (mean) i odchylenie standardowe (std)
+    scaler_X.fit(X_train)
     X_train_scaled = scaler_X.transform(X_train)
     X_test_scaled = scaler_X.transform(X_test)
 
@@ -69,13 +67,13 @@ def train_model(config, X_train, y_train, X_test, y_test):
     )
 
     model.compile(
-        optimizer=Adam(learning_rate=config['learning_rate']), #do aktualizowania wag modelu tak, aby minimalizować funkcję straty
+        optimizer=Adam(learning_rate=config['learning_rate']),
         loss='mse'
     )
 
     metrics_logger = MetricsLogger(X_train_scaled, y_train, X_test_scaled, y_test, scaler_y)
 
-    history = model.fit(
+    model.fit(
         X_train_scaled,
         y_train_scaled,
         epochs=config['epochs'],
@@ -92,5 +90,3 @@ def train_model(config, X_train, y_train, X_test, y_test):
         'scaler_Y': scaler_y,
         'epochs': len(metrics_logger.train_mses)
     }
-
-#standardscaler zapobiega dominacji cech o dużej skali, nie ogranicza zakresu wartości
